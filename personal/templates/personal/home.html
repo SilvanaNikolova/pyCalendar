@@ -1,0 +1,20 @@
+{% extends 'base.html' %} 
+
+{% block content %}
+
+<div class="pricing-header p-3 pb-md-4 mx-auto text-center">
+  <h1 class="display-4 fw-normal text-body-emphasis">pyCalendar</h1>
+  <p class="fs-5 text-body-secondary">An effective application for organizing tasks and events created by students for students.</p>
+</div>
+
+<div class="container">
+  <div class="d-flex flex-column"> <!-- Flex box -->
+    <h3>Registered users:</h3>
+    {% for account in accounts %} 
+      <p>{{account}}</p>
+        <!-- {% include 'personal/snippets/body_snippet.html' with value=question %}  -->
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock content %}
