@@ -1,0 +1,165 @@
+<style>
+    .modal {
+    display: none;
+    position: fixed;
+    z-index: 1050;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-dialog {
+    position: relative;
+    margin: auto;
+    max-width: 500px;
+    width: 100%;
+}
+
+.modal-content {
+    background-color: #fff;
+    border-radius: 5px;
+    padding: 20px;
+}
+</style>
+
+<!-- Modal -->
+<div id="eventModal" class="modal" tabindex="-1" role="dialog" style="display: none;">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Event</h5>
+                <button type="button" class="close" onclick="closeModal()" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="eventForm">
+                    <label for="name">Event Name:</label>
+                    <input type="text" id="name" name="name" required class="form-control"><br>
+
+                    <label for="description">Description:</label>
+                    <textarea id="description" name="description" required class="form-control"></textarea><br>
+
+                    <label for="category">Category:</label>
+                    <select id="category" name="category" class="form-control">
+                        <!-- Categories will be loaded dynamically -->
+                    </select><br>
+
+                    <label for="status">Status:</label>
+                    <select id="status" name="status" class="form-control">
+                        <option value="future">Future</option>
+                        <option value="active">Active</option>
+                        <option value="past">Past</option>
+                    </select><br>
+
+                    <label for="start_date">Start Date & Time:</label>
+                    <input type="datetime-local" id="start_date" name="start_date" required class="form-control"><br>
+
+                    <label for="end_date">End Date & Time:</label>
+                    <input type="datetime-local" id="end_date" name="end_date" required class="form-control"><br>
+
+                    <label for="repeat">Repeat:</label>
+                    <select id="repeat" name="repeat" class="form-control">
+                        <option value="none">No repeat</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="yearly">Yearly</option>
+                    </select><br>
+
+                    <label for="end_repeat_date">End Repeat Date:</label>
+                    <input type="date" id="end_repeat_date" name="end_repeat_date" class="form-control"><br>
+
+                    <label for="participants">Participants:</label>
+                    <select id="participants" name="participants" multiple class="form-control">
+                        <!-- Users will be loaded dynamically -->
+                    </select><br>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Close</button>
+                <button type="button" class="btn btn-primary" onclick="submitEventForm()">Save Event</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openModal(start, end) {
+    // Show modal
+    $("#eventModal").show();
+
+    // Pre-fill start and end date
+    $("#start_date").val(moment(start).format("YYYY-MM-DDTHH:mm"));
+    $("#end_date").val(moment(end).format("YYYY-MM-DDTHH:mm"));
+
+    // Load categories and participants dynamically
+    loadCategoriesAndParticipants();
+}
+
+function closeModal() {
+    $("#eventModal").hide();
+}
+
+function submitEventForm() {
+    var formData = {
+        name: $("#name").val(),
+        description: $("#description").val(),
+        category: $("#category").val(),
+        status: $("#status").val(),
+        start_date: $("#start_date").val(),
+        end_date: $("#end_date").val(),
+        repeat: $("#repeat").val(),
+        end_repeat_date: $("#end_repeat_date").val(),
+        participants: $("#participants").val(),
+    };
+
+    $.ajax({
+        type: "POST",
+        url: "/add_event",
+        data: formData,
+        success: function (response) {
+            alert("Event added successfully!");
+            closeModal();
+            calendar.fullCalendar("refetchEvents");
+        },
+        error: function () {
+            alert("Error adding the event!");
+        },
+    });
+}
+
+function loadCategoriesAndParticipants() {
+    $.ajax({
+        type: "GET",
+        url: "/get_event_data",
+        success: function (data) {
+            // Populate categories
+            var categorySelect = $("#category");
+            categorySelect.empty();
+            if (data.categories.length > 0) {
+                data.categories.forEach(function (category) {
+                    categorySelect.append(`<option value="${category.id}">${category.name}</option>`);
+                });
+            } else {
+                categorySelect.append('<option value="">No categories available</option>');
+            }
+
+            // Populate participants
+            var participantsSelect = $("#participants");
+            participantsSelect.empty();
+            data.users.forEach(function (user) {
+                participantsSelect.append(`<option value="${user.id}">${user.username}</option>`);
+            });
+        },
+        error: function () {
+            alert("Error loading data!");
+        }
+    });
+}
+</script>

@@ -1,0 +1,50 @@
+{% load static %}
+
+<style type="text/css">
+	.card{
+		max-width: 700px;
+		width: 100%;
+	}
+	.card-body{
+		padding: 20px;
+	}
+</style>
+
+{% if category %}
+<div class="container">
+	<div class="row">
+		<!-- Category -->
+		<div class="card m-auto">
+			<a href="{% url 'event:detail-category' category.slug %}">
+				<img class="card-img-top" src="{{category.image.url}}">
+			</a>
+			
+			<div class="card-body mt-2 mb-2">
+				<a href="{% url 'event:detail-category' category.slug %}">
+					<h2 class="card-title">{{category.name}}</h2>
+				</a>
+				<p class="card-text">{{category.description|safe|truncatechars:180}}</p>
+				{% if category.created_user == request.user %}
+					<a href="{% url 'event:edit-category' category.slug %}" class="btn btn-primary">Update</a>
+					<a href="{% url 'event:delete-category' category.slug %}" class="btn btn-primary">Delete</a>
+				{% endif %}
+			</div>
+			<div class="card-footer text-muted">
+			  Updated on {{category.updated_date}} by {{category.created_user}}
+			</div>
+		</div>
+	</div>
+</div>
+{% else %}
+<div class="container">
+	<div class="row">
+		<div class="card m-auto">
+			<div class="card-body mt-2 mb-2">
+				<h2 class="card-title">No results</h2>
+				<p class="card-text">There were no results matching your search: "{{query}}".</p>
+			</div>
+		</div>
+	</div>
+</div>	
+
+{% endif %}

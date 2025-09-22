@@ -1,0 +1,79 @@
+{% extends 'base.html' %} 
+
+{% block content %}
+
+<style type="text/css">
+    .card {
+        max-width: 700px;
+    }
+
+    .container {
+        padding: 20px;
+    }
+</style>
+
+<div class="container">
+    <div class="row">
+
+        <!-- Category -->
+         <div class="card m-auto">
+            <img class="card-img-top img-fluid" src="{{category.image.url}}" alt="">
+            <div class="card-body my-2">
+                <h2 class="card-title">{{category.name}}</h2>
+                <h6 class="card-subtitle mb-2 text-muted">Priority: {{category.get_priority_display}}</h6>
+                <p class="card-text">Description: {{category.description|safe}}</p>
+            </div>
+			    {% if not event_list.empty %}
+
+                <!-- Filter by status form -->
+                <form method="get" action=".">
+                    <label for="status">Filter by status:</label>
+                    <select name="status" id="status">
+                        <option value="">All</option>
+                        <option value="future" {% if status_filter == "future" %}selected{% endif %}>Future</option>
+                        <option value="active" {% if status_filter == "active" %}selected{% endif %}>Active</option>
+                        <option value="past" {% if status_filter == "past" %}selected{% endif %}>Past</option>
+                    </select>
+                    <button type="submit">Filter</button>
+                </form>
+                <!-- END Filter by status form -->
+
+                <h2>Events:</h2>
+                <ul class="list-group list-group-flush">
+			    	{% for event in event_list %}
+			    		<div class="blog-post-container">
+			    			{% include 'event/snippets/event_snippet.html' with event=event %}
+			    		</div>
+			    	{% endfor %}
+                </ul>
+
+                <!-- Pagination -->
+		 	    {% include 'event/snippets/event_pagination.html' with event_list=event_list %}
+			    <!-- END Pagination -->
+			    
+                {% else %}
+			    	<div class="blog-post-container">
+			    		{% include 'event/snippets/event_snippet.html' with query=query %}
+			    	</div>
+			    {% endif %}
+
+                {% if category.created_user == request.user %}
+                    <div class="card-body">
+                        <a href="{% url 'event:edit-category' category.slug %}" class="card-link">Update</a>
+                        <a href="{% url 'event:delete-category' category.slug %}" class="card-link">Delete</a>
+                        <a href="{% url 'event:create-event' category.slug %}" class="card-link">Add Event</a>
+                    </div>
+                {% endif %}
+
+                <a href="{% url 'home' %}" class="btn btn-outline-dark btn-sm" tabindex="-1" role="button">Home</a>
+            
+            <div class="card-footer text-muted">
+                Updated on: {{category.updated_date}} by {{category.created_user}}
+            </div>
+         </div>
+        <!-- END Category -->
+
+    </div>
+</div>
+
+{% endblock content %}

@@ -1,0 +1,19 @@
+<p class="d-inline-flex gap-1">
+  <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+    Show upcoming events
+  </button>
+</p>
+
+<div class="collapse" id="collapseExample">
+    <div class="card card-body">
+    {% if event_list %}
+        {% for event in event_list %}
+            <a href="{% url 'event:detail-event' event.slug %}">
+                <h2 class="card-title">{{event.name}}</h2>
+            </a>
+        {% endfor %}
+    {% else %}
+        <p>You have no events for the upcoming 24 hours.</p>
+    {% endif %}
+    </div>
+</div>

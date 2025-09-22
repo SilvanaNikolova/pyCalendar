@@ -1,0 +1,46 @@
+<div id="eventFormModal" style="display: none;">
+    <form id="eventForm">
+        <label for="name">Event Name:</label>
+        <input type="text" id="name" name="name" required><br>
+
+        <label for="description">Description:</label>
+        <textarea name="description" id="description" required></textarea><br>
+
+        <label for="category">Category:</label>
+        <select name="category" id="category">
+
+        </select><br>
+
+        <label for="status">Status:</label>
+        <select name="status" id="status">
+            <option value="future">Future</option>
+            <option value="active">Active</option>
+            <option value="past">Past</option>
+        </select><br>
+
+        <label for="start_date">Start Date & Time:</label>
+        <input type="datetime-local" id="start_date" name="start_date" required><br>
+
+        <label for="end_date">End Date & Time:</label>
+        <input type="datetime-local" id="end_date" name="end_date" required><br>
+
+        <label for="repeat">Repeat:</label>
+        <select name="repeat" id="repeat">
+            <option value="none">No repeat</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">monthly</option>
+            <option value="yearly">Yearly</option>
+        </select><br>
+
+        <label for="end_repeat_date">End repeat date:</label>
+        <input type="date" name="end_repeat_date" id="end_repeat_date"><br>
+
+        <label for="participants">Participants:</label>
+        <select name="participants" id="participants">
+
+        </select><br>
+
+        <button type="submit">Save Event</button>
+    </form>
+</div>

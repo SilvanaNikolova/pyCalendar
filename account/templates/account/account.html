@@ -2,33 +2,6 @@
 
 {% block content %}
 
-<style type="text/css">
-.form-signin {
-  max-width: 330px;
-  padding: 1rem;
-}
-
-.form-signin .form-floating:focus-within {
-  z-index: 2;
-}
-
-.form-signin input[type="email"] {
-  margin-bottom: -1px;
-  border-bottom-right-radius: 0;
-  border-bottom-left-radius: 0;
-}
-
-.form-signin input[type="username"] {
-  margin-bottom: 10px;
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
-}
-
-.h3 {
-    text-align: center;
-}
-</style>
-
 <main class="form-signin w-100 m-auto">
   <form method="post"> {% csrf_token %}
     <h1 class="h3 mb-3 fw-normal">Account</h1>
@@ -66,6 +39,31 @@
 
 <div class="d-flex flex-column">  
  <a class="m-auto" href="{% url 'password_change' %}">Change password</a>
+</div>
+
+<div class="container mt-4 p-4">
+  <div class="row">
+    <div class="category-list col-8">
+      <h3 class="mb-3 font-weight-normal">Categories:</h3>
+      {% if category_list %}
+      <ul>
+          {% for category in category_list %}
+            <a href="{% url 'event:detail-category' category.slug %}" style="text-decoration: none;">
+              <li class="list-group-item">{{category}}</li>
+            </a>
+          {% endfor %}
+      </ul>
+      {% else %}
+      <p>You have no created categories. Create a category <a href="{% url 'event:create-category' %}">here</a>.</p>
+      {% endif %}
+    </div>
+    <div class="col-4">
+      {% include 'account/snippets/upcoming_events.html' with event_list=upcoming_events %}
+    </div>
+    {% if recap_data %}
+      {% include 'account/snippets/recap_events.html' with recap_data=recap_data %}
+    {% endif %}
+  </div>
 </div>
 
 {% endblock content %}

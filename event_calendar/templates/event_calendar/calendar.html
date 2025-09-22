@@ -1,0 +1,571 @@
+{% extends 'base.html' %} 
+
+{% block content %}
+<style>
+    /* Основен контейнер */
+    #calendar {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 1.5rem;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    /* Заглавие и навигация */
+    .fc-toolbar-title {
+        font-size: 1.6rem;
+        color: #2c3e50;
+        font-weight: 600;
+    }
+
+    .fc-button {
+        background-color: #4a90e2 !important;
+        border-color: #4a90e2 !important;
+        transition: all 0.2s ease;
+    }
+
+    .fc-button:hover {
+        background-color: #357abd !important;
+        transform: translateY(-1px);
+    }
+
+    /* Дни от седмицата */
+    .fc-col-header-cell {
+        background: #f8f9fa;
+        padding: 0.8rem 0;
+        color: #4a5568;
+        font-weight: 500;
+    }
+
+    /* Клетки с дати */
+    .fc-daygrid-day {
+        border: 1px solid #e2e8f0 !important;
+        transition: background 0.2s ease;
+    }
+
+    .fc-daygrid-day:hover {
+        background: #f8fafc !important;
+    }
+
+    .fc-day-today {
+        background-color: #ebf8ff !important;
+    }
+
+    /* Събития */
+    .fc-event {
+        border-radius: 6px !important;
+        border: none !important;
+        padding: 4px 8px;
+        margin: 2px 0;
+        font-size: 0.9rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .fc-event:hover {
+        filter: brightness(95%);
+    }
+
+    /* Индикатор за текуща дата */
+    .fc-daygrid-day-number {
+        font-weight: 500;
+        color: #4a5568;
+    }
+
+    .fc-day-today .fc-daygrid-day-number {
+        color: #2c3e50;
+        font-weight: 600;
+    }
+
+    /* Респонсивност */
+    @media (max-width: 768px) {
+        #calendar {
+            padding: 0.5rem;
+            margin: 1rem;
+        }
+        
+        .fc-toolbar {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .fc-event-title {
+            display: none;
+        }
+    }
+
+    /* Добавете тези стилове */
+    .participant-btn {
+        transition: all 0.3s ease;
+        border: 1px solid #dee2e6;
+    }
+    .participant-btn.selected {
+        background-color: #0d6efd;
+        color: white;
+        border-color: #0d6efd;
+    }
+</style>
+    <div class="container">
+        <div id="calendar"></div>
+    </div>
+    <!-- Add Event Modal -->
+    <div class="modal fade" id="addEventModal" tabindex="-1" aria-labelledby="addEventModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addEventModalLabel">Add New Event</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addEventForm">
+                        <div class="form-group">
+                            <label>Event Name</label>
+                            <input type="text" class="form-control" name="title" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea class="form-control" name="description" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select class="form-select" name="status" required>
+                                <option value="future">Future</option>
+                                <option value="active">Active</option>
+                                <option value="past">Past</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Start Date</label>
+                            <input type="datetime-local" class="form-control" name="start" required>
+                        </div>
+                        <div class="form-group">
+                            <label>End Date</label>
+                            <input type="datetime-local" class="form-control" name="end" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Repeat</label>
+                            <select class="form-select" name="repeat" id="repeatSelect" required>
+                                <option value="none">No repeat</option>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                                <option value="yearly">Yearly</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="endRepeatDateGroup" style="display: none;">
+                            <label>Repeat until</label>
+                            <input type="date" class="form-control" name="end_repeat_date" id="endRepeatDate">
+                        </div>
+                        <div class="form-group">
+                            <label>Category</label>
+                            <select class="form-select" name="category" id="categorySelect" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label >Participants</label>
+                            <div id="participantsContainer" class="d-flex flex-wrap gap-2">
+                                <!-- Бутоните ще се генерират динамично тук -->
+                            </div>
+                            <input type="hidden" id="selectedParticipants" name="participants">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="saveEvent()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Details Modal -->
+    <div class="modal fade" id="eventDetailsModal" tabindex="-1" aria-labelledby="eventDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="eventDetailsModalLabel">Event Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="eventDetailsContent">
+                    <!-- Dynamic content loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" onclick="deleteEvent()">Delete</button>
+                    <button type="button" class="btn btn-primary" onclick="openEditModal()">Edit</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Event Modal -->
+    <div class="modal fade" id="editEventModal" tabindex="-1" aria-labelledby="editEventModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editEventModalLabel">Edit Event</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editEventForm">
+                        <!-- Формата ще се попълни динамично от JavaScript -->
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="saveEditedEvent()">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block extra_scripts %}
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script> -->
+    
+    <!-- <script 
+        src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" 
+        integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRk/v/v+1z9d2q5kC+hVqc2pM8LCewa" 
+        crossorigin="anonymous">
+    </script> -->
+    <script>
+        let currentEventSlug = null;
+        const calendarEl = document.getElementById('calendar');
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            events: '/event_calendar/events/',
+            editable: true,
+            selectable: true,
+            select: function(info) {
+                console.log(info.start, '\n', info.end);
+                showAddModal(info.start, info.end);
+            },
+            eventClick: function(info) {
+                showEventDetails(info.event);
+            },
+            eventDrop: function(info) {
+                updateEventTime(info.event);
+            },
+            eventResize: function(info) {
+                updateEventTime(info.event);
+            }
+        });
+        calendar.render();
+
+        function openEditModal() {
+            // Зареди данните за събитието
+            fetch(`/event_calendar/event/${currentEventSlug}/`)
+            .then(response => response.json())
+            .then(data => {
+                // Попълвам формата за редактиране
+                document.getElementById('editEventForm').innerHTML = `
+                    <div class="form-group">
+                        <label>Event Name</label>
+                        <input type="text" class="form-control" name="title" value="${data.name}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea class="form-control" name="description" required>${data.description}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select class="form-select" name="status" required>
+                            <option value="future" ${data.status === 'future' ? 'selected' : ''}>Future</option>
+                            <option value="active" ${data.status === 'active' ? 'selected' : ''}>Active</option>
+                            <option value="past" ${data.status === 'past' ? 'selected' : ''}>Past</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Start Date</label>
+                        <input type="datetime-local" class="form-control" name="start" value="${formatDateTime(data.start_date)}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>End Date</label>
+                        <input type="datetime-local" class="form-control" name="end" value="${formatDateTime(data.end_date)}" required>
+                    </div>
+                `;
+
+                // Покажи модалния прозорец
+                const editModal = new bootstrap.Modal('#editEventModal');
+                editModal.show();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to load event details');
+            });
+        }
+
+        let selectedParticipants = [];
+
+        function toggleParticipant(button, userId) {
+            const index = selectedParticipants.indexOf(userId);
+            
+            if (index === -1) {
+                // Добавяне на участник
+                selectedParticipants.push(userId);
+                button.classList.add('selected');
+            } else {
+                // Премахване на участник
+                selectedParticipants.splice(index, 1);
+                button.classList.remove('selected');
+            }
+            
+            // Обновяване на скритото поле
+            document.getElementById('selectedParticipants').value = selectedParticipants.join(',');
+        }
+
+        async function showAddModal(start, end) {
+            selectedParticipants = [];
+            document.getElementById('selectedParticipants').value = '';
+
+            // Load dynamic data
+            const response = await fetch('/event_calendar/event_data/');
+            const data = await response.json();
+
+            const container = document.getElementById('participantsContainer');
+            container.innerHTML = data.users.map(user => `
+                <button 
+                    type="button" 
+                    class="btn btn-outline-primary participant-btn rounded-pill"
+                    onclick="toggleParticipant(this, ${user.id})"
+                >
+                    ${user.username}
+                </button>
+            `).join('');
+
+            document.getElementById('repeatSelect').addEventListener('change', function() {
+                const endRepeatDateGroup = document.getElementById('endRepeatDateGroup');
+                if (this.value !== 'none') {
+                    endRepeatDateGroup.style.display = 'block';
+                } else {
+                    endRepeatDateGroup.style.display = 'none';
+                }
+            });
+            
+            // Populate categories
+            const categorySelect = document.getElementById('categorySelect');
+            categorySelect.innerHTML = data.categories.map(c => 
+                `<option value="${c.id}">${c.name}</option>`
+            ).join('');
+
+            // Set dates
+            document.querySelector('input[name="start"]').value = formatDateTime(start);
+            document.querySelector('input[name="end"]').value = formatDateTime(end);
+            
+            const modal = new bootstrap.Modal('#addEventModal');
+            modal.show();
+        }
+
+        function showEventDetails(event) {
+            currentEventSlug = event.extendedProps.slug;
+            fetch(`/event_calendar/event/${currentEventSlug}/`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Event not found');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Показване на данните в модалния прозорец
+                const content = `
+                    <p><strong>Name:</strong> ${data.name}</p>
+                    <p><strong>Description:</strong> ${data.description}</p>
+                    <p><strong>Status:</strong> ${data.status}</p>
+                    <p><strong>Start:</strong> ${new Date(data.start_date).toLocaleString()}</p>
+                    <p><strong>End:</strong> ${new Date(data.end_date).toLocaleString()}</p>
+                    <p><strong>Repeat:</strong> ${data.repeat}</p>
+                    <p><strong>Category:</strong> ${data.category}</p>
+                    <p><strong>Participants:</strong> ${data.participants.join(', ')}</p>
+                `;
+                document.getElementById('eventDetailsContent').innerHTML = content;
+                const modal = new bootstrap.Modal('#eventDetailsModal');
+                modal.show();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(error.message);
+            });
+        }
+
+        function saveEditedEvent() {
+            const formData = {
+                title: document.querySelector('#editEventForm [name="title"]').value,
+                description: document.querySelector('#editEventForm [name="description"]').value,
+                status: document.querySelector('#editEventForm [name="status"]').value,
+                start: document.querySelector('#editEventForm [name="start"]').value,
+                end: document.querySelector('#editEventForm [name="end"]').value,
+            };
+
+            fetch(`/event_calendar/event/${currentEventSlug}/update/`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert(data.message);
+                    calendar.refetchEvents();  // Презареди събитията в календара
+                    bootstrap.Modal.getInstance('#editEventModal').hide();  // Затвори модалния прозорец
+                } else {
+                    throw new Error('Failed to update event');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to update event');
+            });
+        }
+
+        async function saveEvent() {
+            const start = new Date(document.querySelector('[name="start"]').value);
+            const end = new Date(document.querySelector('[name="end"]').value);
+            const endRepeatDateInput = document.querySelector('[name="end_repeat_date"]');
+            const endRepeatDate = endRepeatDateInput.value
+                ? new Date(endRepeatDateInput.value)
+                : null;
+
+            const selectedItems = document.querySelectorAll('.participant-item.selected');
+            const selected_participants = Array.from(selectedItems).map(item => item.dataset.id);
+
+            const formData = {
+                title: document.querySelector('#addEventForm [name="title"]').value,
+                description: document.querySelector('#addEventForm [name="description"]').value,
+                status: document.querySelector('#addEventForm [name="status"]').value,
+                start: start.toISOString(),
+                end: end.toISOString(),
+                repeat: document.querySelector('#addEventForm [name="repeat"]').value,
+                category: document.querySelector('#categorySelect').value,
+                participants: selectedParticipants,
+                end_repeat_date: endRepeatDate ? endRepeatDate.toISOString().split('T')[0] : null
+            };
+            // Изпращам POST заявка
+            fetch('/event_calendar/add_event/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert(data.message);
+                    calendar.refetchEvents();  // Презареди събитията в календара
+                    clearForm();
+                    bootstrap.Modal.getInstance('#addEventModal').hide();  // Затвори модалния прозорец
+                } else {
+                    clearForm();
+                    throw new Error('Failed to add event');
+                }
+            })
+            .catch(error => {
+                clearForm();
+                console.error('Error:', error);
+                alert('Failed to add event');
+            });
+        }
+
+        async function updateEventTime(event) {
+            const formData = {
+                title: event.title,
+                start: event.start.toISOString(),
+                end: event.end.toISOString(),
+                description: event.extendedProps.description,
+                status: event.extendedProps.status,
+                repeat: event.extendedProps.repeat
+            };
+
+            await fetch(`/event_calendar/update_event/${event.extendedProps.slug}/`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify(formData)
+            });
+        }
+
+        async function deleteEvent() {
+            if (confirm('Are you sure you want to delete this event?')) {
+                await fetch(`/event_calendar/delete_event/${currentEventSlug}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                });
+                calendar.refetchEvents();
+                bootstrap.Modal.getInstance('#eventDetailsModal').hide();
+            }
+        }
+
+        function updateSelectedList(selectedOptions) {
+            const selectedList = document.getElementById('selectedParticipants');
+            if (!selectedList) return;
+
+            selectedList.innerHTML = selectedOptions
+                .map(opt => `<li>${opt.name}</li>`)
+                .join('');
+        }
+
+        function formatDateTime(date) {
+            const adjustedDate = new Date(date);
+
+            // Форматиране на датата и часа
+            const year = adjustedDate.getFullYear();
+            const month = String(adjustedDate.getMonth() + 1).padStart(2, '0'); // Месеци са 0-базирани
+            const day = String(adjustedDate.getDate()).padStart(2, '0');
+            const hour = String(adjustedDate.getHours()).padStart(2, '0');
+            const minute = String(adjustedDate.getMinutes()).padStart(2, '0');
+
+            // Примерен формат: 2025-02-12T15:00
+            return `${year}-${month}-${day}T${hour}:${minute}`;
+        }
+
+        // Извлича стойностите на бисквитките при работа с csrf token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function clearForm() {
+            const form = document.querySelector('#addEventForm');
+            
+            // Изчисти всички input и textarea полета
+            form.querySelectorAll('input, textarea').forEach(field => {
+                if (field.type === 'checkbox' || field.type === 'radio') {
+                    field.checked = false;
+                } else {
+                    field.value = '';
+                }
+            });
+
+            // Изчисти всички select полета
+            form.querySelectorAll('select').forEach(select => {
+                select.selectedIndex = 0; // Връща се към първия <option>
+            });
+
+            // Скрий групата за "Repeat until", ако е било показано
+            const endRepeatDateGroup = document.getElementById('endRepeatDateGroup');
+            if (endRepeatDateGroup) {
+                endRepeatDateGroup.style.display = 'none';
+            }
+        }
+
+    </script>
+{% endblock extra_scripts %}
+{% endblock content %}

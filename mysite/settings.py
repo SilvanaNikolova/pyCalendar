@@ -29,7 +29,15 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 if DEBUG:
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' #During development mode
+    # Задаване на имейл за изпращане на нотификации за предстоящи събития
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' #During development mode
+    EMAIL_HOST = 'smtp.gmail.com'
+    EMAIL_HOST_USER = 'silvana.nikolova2003@gmail.com'
+    EMAIL_HOST_PASSWORD = 'zfilhozcoaungvwp'
+    EMAIL_PORT = 587
+    EMAIL_USE_TLS = True
+    DEFAULT_FROM_EMAIL = 'pyCalendar'
+    ACCOUNT_EMAIL_SUBJECT_PREFIX = ''
 
 
 # Application definition
@@ -39,6 +47,10 @@ INSTALLED_APPS = [
     'personal',
     'account',
     'event',
+    'event_calendar',
+
+    #celery
+    'django_celery_beat',
 
     #Django Apps
     'django.contrib.admin',
@@ -48,6 +60,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 ]
+
+# Celery настройки
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # URL на Redis брокера
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -117,17 +133,25 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Sofia'
 
 USE_I18N = True
 
 USE_TZ = True
 
+USE_L10N = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+    os.path.join(BASE_DIR, 'media'),
+]
+STATIC_URL = '/static/'
+MEDIA_URL = '/media/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static_cdn') #content delivery network
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media_cdn') #content delivery network
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

@@ -1,0 +1,27 @@
+<style type="text/css">
+	.card{
+		max-width: 700px;
+		width: 100%;
+	}
+	.card-body{
+		padding: 20px;
+	}
+</style>
+
+<div class="container">
+	<div class="row">
+		<!-- Event -->
+		<div class="card m-auto">
+			<div class="card-body mt-2 mb-2">
+				<a href="{% url 'event:detail-event' event.slug %}">
+					<h2 class="card-title">{{event.name}}</h2>
+				</a>
+				<p class="card-text">{{event.description|safe|truncatechars:180}}</p>
+			</div>
+            <div class="card-footer text-muted">
+                <td><span>Start Date: {{event.start_date}} </span></td>
+                <td><span>End Date: {{event.end_date}} </span></td>
+            </div>
+		</div>
+	</div>
+</div>

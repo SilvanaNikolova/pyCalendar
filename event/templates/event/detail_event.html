@@ -1,0 +1,51 @@
+{% extends 'base.html' %} 
+
+{% block content %}
+
+<style type="text/css">
+    .card {
+        max-width: 700px;
+    }
+
+    .container {
+        padding: 20px;
+    }
+</style>
+
+<div class="container">
+    <div class="row">
+
+        <!-- Event -->
+         <div class="card m-auto">
+            <div class="card-body my-2">
+                <h2 class="card-title">{{event.name}}</h2>
+                <h6 class="card-subtitle mb-2 text-muted">Status: {{event.get_status_display}}</h6>
+                <p class="card-text">Description: {{event.description|safe}}</p> <!--Не ексейпва специални символи -->
+                <p class="card-text">Participants: {{participants}} </p> <!--Не ексейпва специални символи -->
+            </div>
+            <div class="card-footer text-muted">
+                <td><span>Start Date: {{event.start_date}} </span></td>
+                <td><span>End Date: {{event.end_date}} </span></td>
+            </div>
+
+            {% if request.user not in event.participants.all and request.user != event.created_user %}
+                <div class="card-body">
+                    <form action="{% url 'event:add-participant' event.slug %}">
+                        {% csrf_token %}
+                        <button type="submit">Join this event</button>
+                    </form>
+                </div>
+            {% else %}
+                <div class="card-body">
+                        <a href="{% url 'event:edit-event' event.slug %}" class="card-link">Update</a>
+                        <a href="{% url 'event:delete-event' event.slug %}" class="card-link">Delete</a>
+                </div>
+            {% endif %}
+            <a href="{% url 'event:detail-category' category.slug %}" class="btn btn-outline-dark btn-sm" tabindex="-1" role="button">Back</a>
+         </div>
+        <!-- END Event -->
+
+    </div>
+</div>
+
+{% endblock content %}

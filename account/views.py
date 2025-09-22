@@ -1,6 +1,12 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout
+from django.db.models import Q
+from django.utils import timezone
+
 from account.forms import RegistrationForm, AccountAuthenticationForm, AccountUpdateForm
+from account.tasks import annual_recap_task
+from event.models import EventCategory, Event
+from event.helpers import generate_upcoming_events
 
 def registration_view(request):
     context = {}
@@ -10,7 +16,7 @@ def registration_view(request):
             form.save()
             email = form.cleaned_data.get('email')
             password = form.cleaned_data.get('password1')
-            account = authenticate(email, password)
+            account = authenticate(email=email, password=password)
             login(request, account)
             return redirect('home')
         else:
@@ -71,4 +77,27 @@ def account_view(request):
         )
     
     context['account_form'] = form
+
+    categories = EventCategory.objects.filter(created_user=request.user)
+    context['category_list'] = categories
+    upcoming_events = generate_upcoming_events(request.user)
+    event_list = Event.objects.filter(
+        Q(created_user=request.user) | Q(participants=request.user)
+    ).distinct()
+
+    context['upcoming_events'] = upcoming_events
+    context['event_list'] = event_list
+    
+    today = timezone.now().date()
+    recap_data = None
+    
+    #За тестване махам проверката за месец и ден
+    if not recap_data and today.month == 12 and today.day == 31:
+        recap_data = annual_recap_task(request.user)
+    
+    context['recap_data'] = recap_data
+    
     return render(request, 'account/account.html', context)
+
+def must_authenticate_view(request):
+    return render(request, 'account/must_authenticate.html', {})

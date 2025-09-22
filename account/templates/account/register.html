@@ -1,4 +1,4 @@
-{% extends 'base.html' %} 
+{% extends 'base.html' %}
 
 {% block content %}
 
@@ -36,24 +36,25 @@
 </style>
 
 <main class="form-signin w-100 m-auto">
-  <form method="post"> {% csrf_token %}
-    <h1 class="h3 mb-3 fw-normal">Register</h1>
+  <form method="post"> 
+    {% csrf_token %}
+    <h1 class="h3 mb-3 fw-normal">Register an account</h1>
 
     <div class="form-floating">
-      <input type="email" name="email" class="form-control" id="floatingInput" placeholder="name@example.com">
-      <label for="floatingInput">Email address</label>
+      <input type="email" name="email" class="form-control" id="inputEmail" placeholder="name@example.com" required autofocus>
+      <label for="inputEmail">Email</label>
     </div>
     <div class="form-floating">
-      <input type="text" name="username" class="form-control" id="floatingInput" placeholder="Username">
-      <label for="floatingInput">Username</label>
+      <input type="text" name="username" class="form-control" id="inputUsername" placeholder="Username" required>
+      <label for="inputUsername">Username</label>
     </div>
     <div class="form-floating">
-      <input type="password" name="password1" class="form-control" id="floatingPassword" placeholder="Password">
-      <label for="floatingPassword">Password</label>
+      <input type="password" name="password1" class="form-control" id="inputPassword1" placeholder="Password" required>
+      <label for="inputPassword1">Password</label>
     </div>
     <div class="form-floating">
-      <input type="password" name="password2" class="form-control" id="floatingPassword" placeholder="Confirm password">
-      <label for="floatingPassword">Confirm password</label>
+      <input type="password" name="password2" class="form-control" id="inputPassword2" placeholder="Confirm password" required>
+      <label for="inputPassword2">Confirm password</label>
     </div>
 
     {% for field in registration_form %}
